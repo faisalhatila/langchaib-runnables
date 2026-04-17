@@ -13,11 +13,6 @@ class FakeLLM:
         ]
 
         return {'response': random.choice(response_list)}
-    
-llm = FakeLLM()
-
-print(llm.predict('What is the capital of Pakistan'))
-
 
 class FakePromptTemplate:
 
@@ -28,8 +23,15 @@ class FakePromptTemplate:
     def format(self, input_dict):
         return self.template.format(**input_dict)
 template = FakePromptTemplate(
-    template='Write a poem about {topic}',
-    input_variables=['topic']
+    template='Write a {length} poem about {topic}',
+    input_variables=['length','topic']
 )
 
-print(template.format({'topic':'Pakistan'}))
+prompt = template.format({'length':'short','topic':'Pakistan'})
+
+llm = FakeLLM()
+
+result = llm.predict(prompt)
+
+# print(llm.predict('What is the capital of Pakistan'))
+print(result)
