@@ -43,6 +43,13 @@ class FakePromptTemplate(Runnable):
     def format(self, input_dict):
         return self.template.format(**input_dict)
     
+class FakeStrOutputParser(Runnable):
+    def __init__(self):
+        pass
+
+    def invoke(self,input_data):
+        return input_data['response']
+    
 class RunnableConnector(Runnable):
     
     def __init__(self, runnable_list):
@@ -51,4 +58,16 @@ class RunnableConnector(Runnable):
     def invoke(self, input_data):
 
         for runnable in self.runnable_list:
-            runnable.invoke(input_data)
+            input_data = runnable.invoke(input_data)
+        return input_data
+    
+template = FakePromptTemplate(
+    template='Write a {length} poem about {topic}',
+    input_variables=['length','topic']
+)
+
+llm = FakeLLM()
+
+chain = RunnableConnector([template, llm])
+
+print(chain.invoke({'length':'long','topic':'Pakistan'}))
