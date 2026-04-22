@@ -31,49 +31,87 @@
 
 ## JSON Output Sequence
 
-from langchain_openai import ChatOpenAI
+# from langchain_openai import ChatOpenAI
+# from langchain_core.prompts import PromptTemplate
+# from langchain_core.output_parsers import StrOutputParser
+# from langchain_core.runnables import RunnableSequence, RunnableLambda
+# from dotenv import load_dotenv
+
+# load_dotenv()
+
+# model = ChatOpenAI()
+# parser = StrOutputParser()
+
+# prompt1 = PromptTemplate(
+#     template="Write a joke about {topic}",
+#     input_variables=["topic"]
+# )
+
+# prompt2 = PromptTemplate(
+#     template="Explain the following joke: {joke}",
+#     input_variables=["joke"]
+# )
+
+# # Step 1: generate joke
+# joke_step = prompt1 | model | parser
+
+# # Step 2: convert joke into dict (preserve it)
+# wrap_joke = RunnableLambda(lambda joke: {"joke": joke})
+
+# # Step 3: generate explanation but KEEP joke
+# def add_explanation(data):
+#     explanation = (prompt2 | model | parser).invoke({"joke": data["joke"]})
+#     return {
+#         "joke": data["joke"],
+#         "explanation": explanation
+#     }
+
+# explain_step = RunnableLambda(add_explanation)
+
+# # Full sequence
+# chain = RunnableSequence(
+#     joke_step,
+#     wrap_joke,
+#     explain_step
+# )
+
+# result = chain.invoke({"topic": "AI"})
+# print(result)
+
+
+## Try with huggingface
+
+
+from langchain_huggingface import HuggingFaceEndpoint, ChatHuggingFace
 from langchain_core.prompts import PromptTemplate
-from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnableSequence, RunnableLambda
+from langchain_core.output_parsers import StrOutputParser, JsonOutputParser
+from langchain_classic.schema.runnable import RunnableSequence
 from dotenv import load_dotenv
 
 load_dotenv()
 
-model = ChatOpenAI()
-parser = StrOutputParser()
+llm = HuggingFaceEndpoint(
+    repo_id="MiniMaxAI/MiniMax-M2.7",
+    task="text-generation"
+)
+
+model = ChatHuggingFace(llm = llm)
 
 prompt1 = PromptTemplate(
-    template="Write a joke about {topic}",
-    input_variables=["topic"]
+    template='Write a joke about {topic}',
+    input_variables=['topic']
 )
+
+
+parser = StrOutputParser()
 
 prompt2 = PromptTemplate(
-    template="Explain the following joke: {joke}",
-    input_variables=["joke"]
+    template='Explain the following joke - {text}',
+    input_variables=['text']
 )
 
-# Step 1: generate joke
-joke_step = prompt1 | model | parser
+chain = RunnableSequence(prompt1, model, parser, prompt2, model, parser)
 
-# Step 2: convert joke into dict (preserve it)
-wrap_joke = RunnableLambda(lambda joke: {"joke": joke})
+result = chain.invoke({'topic':'AI'})
 
-# Step 3: generate explanation but KEEP joke
-def add_explanation(data):
-    explanation = (prompt2 | model | parser).invoke({"joke": data["joke"]})
-    return {
-        "joke": data["joke"],
-        "explanation": explanation
-    }
-
-explain_step = RunnableLambda(add_explanation)
-
-# Full sequence
-chain = RunnableSequence(
-    joke_step,
-    wrap_joke,
-    explain_step
-)
-
-result = chain.invoke({"topic": "AI"})
 print(result)
