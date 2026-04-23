@@ -33,11 +33,11 @@ parser = StrOutputParser()
 report_gen_chain = prompt1 | model | parser
 
 branch_chain = RunnableBranch(
-    (lambda x:len(x.split())>300, RunnableSequence(prompt2, model, parser)),
+    (lambda x:len(x.split())>300, prompt2 | model | parser),
     RunnablePassthrough()
 )
 
-final_chain = RunnableSequence(report_gen_chain, branch_chain)
+final_chain = report_gen_chain | branch_chain
 
 result = final_chain.invoke({'topic':'USA vs IRAN war'})
 
